@@ -405,7 +405,8 @@ lang(key:="",str:="",regex:=false,group:="langs",add:="",reset:=false) {
 			 while: ["mientras"],
 			 until: ["hasta"],
 			 do: ["hacer"],
-			 use: ["usar"]
+			 use: ["usar"],
+			 for: ["para"]
 		  }
 	   )
        scripts:=
@@ -514,7 +515,8 @@ maps(key) {
              option: {option: {max:2, at:"1,2", atpos:true}, with: {support:true, expand:true, at:3}},
 			 gui: {gui: {literal:true, max:1}},
 			 escape: {escape: {literal:true, max:1}},
-			 eval: {eval: {literal:true, max:1, ignore_func:true}}
+			 eval: {eval: {literal:true, max:1, ignore_func:true}},
+			 for: {for: {literal:true, max:1}, in: {support: true}}
 		   }
 		)
 	   ; Custom definitions
@@ -640,6 +642,15 @@ load_config(configstr:="",local:=false,local_obj:="",from_fd:=0,from_type:="",ne
 				  if !RegExMatch(e.Message, "s)\s*Description:\s*\K(.*?)(?=\R|$)", unexpected)
 					 unexpected:="Invalid syntax\logic"
 			   }
+		   } else if (block_key="for") {
+			  _for:=read_line_, read_line_:=""
+			  for key, val in _for.in {
+				  FD[outfd][_for.for.1]:=val
+				  to_return:=load_config(block_capture,,,outfd,block_type)
+				  if isObject(SIGNALME.unexpected)||(SIGNALME.code&&Floor(SIGNALME.code)<=3)
+					 break
+			  }
+			  FD[outfd][_for.for.1]:=""
 		   }
 		   block_capture:="", last_label:=back_label
 		   (unexpected&&!from_type) ? from_type:=block_type
@@ -770,14 +781,14 @@ load_config(configstr:="",local:=false,local_obj:="",from_fd:=0,from_type:="",ne
 				unexpected:="Expected code block type"
 			 }
 		 } else {
-			 Eval(block_with,FD)[1] ? block_result:=1 : block_result:=0
+			 (block_key="for") ? (block_result:=1, with_partial:=block_key, block_with:="") : Eval(block_with,FD)[1] ? block_result:=1 : block_result:=0
 			 (Floor(SIGNALME.code)=3&&(block_key="while"||block_key="until")) ? SIGNALME.code:=""
 			 (block_key="until") ? block_result ? block_result:=0 : block_result:=1
 		 }
 		 if unexpected {
 			last_label:=back_label
 			break
-		 } else {
+		 } else if !with_partial {
 			continue
 		 }
 	  }
@@ -828,7 +839,9 @@ load_config(configstr:="",local:=false,local_obj:="",from_fd:=0,from_type:="",ne
 		 if (option!="") {
 			back_opt:=option, overwrite:=true, _expand:="", _literal:="", _number:="", _var:="", _var1:="", _var2:="", _var3:=""
 			if (_pos=1) {
-			    if (SubStr(option,1,3)="[``_")||((_chr:=SubStr(option,-1))&&(_chr="++"||_chr="--")) {
+			    if with_partial {
+                    main_action:=with_partial, option:=main_action, maps:=maps(main_action)
+			    } else if (SubStr(option,1,3)="[``_")||((_chr:=SubStr(option,-1))&&(_chr="++"||_chr="--")) {
 				    just_one:=true, _chr ? (_var:=SubStr(option,1,-2)) ? FD[outfd].HasKey(_var) ? (((_chr="++") ? FD[outfd][_var]++ : FD[outfd][_var]--),to_return:=FD[outfd][_var])
 					continue
 				} else {
@@ -895,7 +908,17 @@ load_config(configstr:="",local:=false,local_obj:="",from_fd:=0,from_type:="",ne
 		 }
 	  }
 	 back_label:=last_label
-	 if (main_type="section") {
+	 if with_partial {
+		switch (with_partial) {
+			case "for":
+                if !(read_line_[with_partial].1 ~= "^[a-zA-Z_$][a-zA-Z0-9_$]*$") {
+					unexpected:="Invalid variable name--->" . read_line_[with_partial].1
+					break
+				}
+		}
+		with_partial:=""
+		continue
+	 } else if (main_type="section") {
 		last_label:=main_action
 		to_return:=load_config(script_section[main_action],true,read_line_)
 		(FD_CURRENT>1) ? FD.Pop()
@@ -1022,7 +1045,7 @@ load_config(configstr:="",local:=false,local_obj:="",from_fd:=0,from_type:="",ne
 		 else
 			main_orig:=block_type
 	 }
-	 (!last_label||from_type="resolve") ? show_error:=true
+	 (!last_label||from_type="resolve"||with_partial) ? show_error:=true
      if !isObject(SIGNALME.unexpected) {
 	    if (from_type="resolve")
 		   SIGNALME.unexpected:={unexpected: unexpected, last_label: "", to_show: last_label ? "Error in expression from--->" . last_label : "Line: " . line . "--in---> Expression", main_orig: main_orig, read_line2: solve_escape(solve_escape(solve_escape(read_line2, _escape), _result, "``"), _evaluated, "~")}

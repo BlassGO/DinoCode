@@ -20,6 +20,11 @@ read_console(str:=""){
     stdout.Read(0) ; Flush the write buffer.
     return input
 }
+cmd(str:=""){
+    start_console()
+    Loop, parse, str, `n,`r 
+      Run, %ComSpec% /c %A_LoopField%
+}
 start_console(title:="",w:=false,h:=false,x:="",y:=""){
    static cid, last_title, last_w, last_h
    if !(cid&&WinExist("ahk_id " cid)) {

@@ -4,7 +4,7 @@
    Dinocode is not optimized for great tasks, mainly because of its mode of interpretation and overload of having double interpreter.
 
 ## Implementation
-   > To add DinoCode to your `AutoHotKey` (v1.1.33.11) based program, three libraries must be included:
+   > To add DinoCode to your `AutoHotKey` (v1.1.37.01) based program, three libraries must be included:
    > 
    > **->**  [Download libraries](https://github.com/BlassGO/DinoCode/raw/main/releases/DinoCode_last_release.zip ':ignore')
    > 

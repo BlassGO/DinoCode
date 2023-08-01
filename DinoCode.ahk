@@ -68,9 +68,12 @@
 ; Security restrictions
 ; 
 ; skip_vars and skip_functions are Regex that specify which Functions cannot be called during the execution of DinoCode, and which Variables cannot be modified (Simulating Read Only access)
+; shared_vars is a Regex that allows access to global variables, the first part "^(A_" ensures access to all AHK Native Variables (they always start with A_)
+; If the same global variable is specified in both shared_vars and skip_vars, it implies that the global variable can be read but NOT modified.
 ;
     global skip_functions := "i)(^(load_config|FileOpen|ParseObjects|AssignParse|DllCall|ComObj|Obj|Func|Expr))|(Object)"
-	global skip_vars := "i)^(skip_functions|skip_vars|true|false|verdadero|falso|secure_user_info|FD_CURRENT|GLOBAL|unexpected)$"
+	global skip_vars := "i)^(skip_functions|skip_vars|shared_vars|true|false|verdadero|falso|secure_user_info|FD_CURRENT|GLOBAL|unexpected)$"
+	global shared_vars := "i)^(A_|(FD_CURRENT)$)"
 ;
 ;=======================================================================================
 SetBatchLines -1
@@ -325,15 +328,21 @@ class DObj
     __Get(key) {
         if GLOBAL.HasKey(key)
            return GLOBAL[key]
+		else if (key~=shared_vars)&&isSet(%key%) {
+		   return tmp:=%key%
+		}
     }
 	__Set(key, value) {
         if GLOBAL.HasKey(key) {
             GLOBAL[key]:=value
 			return
+		} else if (key~=shared_vars)&&!(key~=skip_vars) {
+			%key%:=value
+			return
 		}
     }
 	HasKey(key) {
-        return ObjHasKey(GLOBAL,key)||ObjHasKey(this,key)
+        return ObjHasKey(GLOBAL,key)||ObjHasKey(this,key)||((key~=shared_vars)&&isSet(%key%))
     }
 	global(key) {
 		GLOBAL[key]:=this[key]

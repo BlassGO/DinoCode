@@ -11,9 +11,12 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 code=
 (
 
+# It can be considered a function
 :Show_Result
-    Message "HUH" With "Success rate: `% Round(1/(INCORRECT+1)*100, 2) `% \`%"
-:main
+    Message "HUH" With "Success rate: $(Round (1/(INCORRECT+1)*100) 2) `%"
+
+# Main TAG that runs by default
+:MAIN
    Global INCORRECT
    Set INCORRECT With 0
    If $(Question With "Do you want to continue?")

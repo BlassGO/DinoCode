@@ -67,12 +67,6 @@ Eval($x, Byref _CustomVars := "", _Init := true)
 	,   _Elements[Hidtmp] := _Bracket
 	,	$x := StrReplace($x, _Bracket, Hidtmp,, 1)
 	
-	; Hiding Braces
-	While (RegExMatch($x, "\{[^\{\}]++\}", _Brace))
-	    Hidtmp := "_&Brace" . _Elements.Count()+1 . "&_"
-	,	_Elements[Hidtmp] := _Brace
-	,	$x := StrReplace($x, _Brace, Hidtmp,, 1)
-	
 	; Hiding Parenthesis
 	While (RegExMatch($x, "\(([^()]++|(?R))*\)", _Parent))
 	    Hidtmp := "_&Parent" . _Elements.Count()+1 . "&_"
@@ -230,7 +224,7 @@ Eval($x, Byref _CustomVars := "", _Init := true)
 	return $z
 }
 
-ParseObjects(v_String, Byref _CustomVars := "", o_Oper :=  "", o_Value := "")
+ParseObjects(v_String, Byref _CustomVars := "", o_Oper :=  "", Byref o_Value := "")
 {
 	Static _needle := "([\w%]+\.?|\(([^()]++|(?R))*\)\.?|\[([^\[\]]++|(?R))*\]\.?)"
 	

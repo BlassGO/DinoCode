@@ -13,6 +13,8 @@
    > #include eval.ahk
    > #include active_script.ahk
    > ```
+
+   **NOTE:** You can add additional libraries (plugins) such as HtmlGui to provide more functions.
    
    
    * **General use**
